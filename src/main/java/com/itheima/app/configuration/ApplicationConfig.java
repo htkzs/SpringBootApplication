@@ -7,10 +7,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.util.UrlPathHelper;
 
 @Configuration(proxyBeanMethods = true)
-@EnableConfigurationProperties(Car.class)
-public class ApplicationConfig {
+@EnableConfigurationProperties(value = Car.class)
+public class ApplicationConfig  {
 
      @ConditionalOnBean(name = "getPet")
      @Bean
@@ -23,4 +26,7 @@ public class ApplicationConfig {
      public Pet getPet(){
          return new Pet("哈士奇",2);
      }
+
+
+
 }
