@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = true)
-@EnableConfigurationProperties(Car.class)
+@EnableConfigurationProperties(value = Car.class)
 public class ApplicationConfig {
 
      @ConditionalOnBean(name = "getPet")

@@ -9,6 +9,8 @@
 @EnableConfigurationProperties(Car.class)
 public class ApplicationConfig {
 }
+@ConfigurationProperties(prefix = "mycar")
+public class Car {}
 
 
 @Component+@ConfighurationProperties
@@ -16,3 +18,7 @@ public class ApplicationConfig {
 @Component
 @ConfigurationProperties(prefix = "mycar")
 public class Car {}
+
+配置文件的写法：
+    mycar.brand=BWD
+    mycar.price=10000

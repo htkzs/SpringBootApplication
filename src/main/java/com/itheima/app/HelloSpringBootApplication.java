@@ -15,7 +15,6 @@ import org.springframework.web.servlet.DispatcherServlet;
  */
 @ImportResource(value="classpath:bean.xml")
 @SpringBootApplication
-@Import(DispatcherServlet.class)
 public class HelloSpringBootApplication {
     public static void main(String[] args) {
 
