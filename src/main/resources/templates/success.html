@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1 th:text="${msg}">hello springboot</h1>
+真正替换为要跳转的地址：<a href="www.atguigu.com" th:href="${link}">baidu</a>
+<!--绝对路径写法 访问路径为：http://localhost:8080/link-->
+只是在项目的根路径上拼接link:<a href="www.atguigu.com" th:href="@{/link}">百度</a>
+<!--相对路径写法 将link拼接为一个 访问路径为：http://localhost:8080/view/link-->
+只是在项目的根路径上拼接link:<a href="www.atguigu.com" th:href="@{link}">百度</a>
+</body>
+</html>

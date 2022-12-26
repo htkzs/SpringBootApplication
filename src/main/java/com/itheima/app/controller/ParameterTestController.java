@@ -1,11 +1,13 @@
 package com.itheima.app.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import sun.plugin2.applet.AWTAppletSecurityManager;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +86,7 @@ public class ParameterTestController {
      **/
     @ResponseBody
     @PostMapping("/success")
-    public String goToPage(@RequestAttribute("content") String content,HttpServletRequest request){
+    public String goToPage(@RequestAttribute(value = "content",required = false) String content,HttpServletRequest request){
         String content1 = (String) request.getAttribute("content");
         System.out.println("通过原生的HttpServletRequest获取请求域中的数据"+content1);
         System.out.println("通过@RequestAttribute('content')获取请求域中的数据"+content);
@@ -125,5 +127,35 @@ public class ParameterTestController {
         System.out.println("路径的真实值为"+path);
         return map;
     }
+    /*
+     * @Author GhostGalaxy
+     * @Description //复杂参数的原理 给map，model中放数据相当于放入到请求域中
+     *
+     * @Date 15:07:59 2022/12/23
+     * @Param [param1, param2, request, response]
+     * @return java.lang.String
+     **/
+    @GetMapping( "/param/test")
+    public String complexParam(Map<String,Object> param1, Model param2, HttpServletRequest request, HttpServletResponse response){
+        param1.put("hello","world");
+        param2.addAttribute("spring","springboot 2");
+        request.setAttribute("world","hello");
+        Cookie cookie = new Cookie("c","v");
 
+        response.addCookie(cookie);
+        return "forward:/page";
+    }
+
+    @ResponseBody
+    @GetMapping("/page")
+    public Map<String,Object> gotoPage(HttpServletRequest request){
+        Object hello = request.getAttribute("hello");
+        Object spring = request.getAttribute("spring");
+        Object world = request.getAttribute("world");
+        Map<String,Object> map = new HashMap<>();
+        map.put("hello",hello);
+        map.put("spring",spring);
+        map.put("world",world);
+        return map;
+    }
 }
