@@ -7,7 +7,7 @@
 2.自定义的异常页面 定制错误处理逻辑
     ● 要对其进行自定义，添加View解析为error
     ● 要完全替换默认行为，可以实现 ErrorController 并注册该类型的Bean定义，或添加ErrorAttributes类型的组件以使用现有机制但替换其内容。
-    ● error/下的4xx，5xx页面会被自动解析；可以打印一些错误的堆栈信息
+    ● error/下的4xx，5xx页面会被自动解析；可以打印一些错误的堆栈信息(定义为5xx的原因在于，当发生服务器的内部异常时，通过5xx都能匹配到，当发生客户端请求异常匹配4xx)
    ● 自定义错误页
      ○ error/404.html  error/5xx.html；有精确的错误状态码页面就匹配精确，没有就找 4xx.html；如果都没有就触发白页
    ● @ControllerAdvice+@ExceptionHandler处理全局异常；底层是 ExceptionHandlerExceptionResolver 支持的
@@ -206,3 +206,235 @@ org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController
                 return errorAttributes;
             }
 
+
+异常处理的流程：
+1、执行目标方法，目标方法运行期间有任何异常都会被catch、而且标志当前请求结束；并且用 dispatchException封装
+2、进入视图解析流程（页面渲染？）
+processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
+3、mv = processHandlerException；处理handler发生的异常，处理完成返回ModelAndView；
+● 1、遍历所有的 handlerExceptionResolvers，看谁能处理当前异常【HandlerExceptionResolver处理器异常解析器】 HandlerExceptionResolver是一个接口
+  public interface HandlerExceptionResolver {@Nullable
+                                             	ModelAndView resolveException(
+                                             	        //参数解释 Object handler 发生异常的处理器类型 也就是可以获取到具体发生异常的方法 方法返回一个ModelAndView
+                                             			HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex);
+
+                                             }
+
+  ○ 1、DefaultErrorAttributes先来处理异常。把异常信息保存到request域(方便下次请求携带异常信息)，并且返回null；
+
+  ○ 2、默认没有任何人能处理异常，所以异常会被抛出
+    ■ 1、如果没有任何人能处理最终底层就会发送 /error 请求。会被底层的BasicErrorController处理
+      org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController
+          @RequestMapping(
+                 produces = {"text/html"}
+             )
+             public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
+                 HttpStatus status = this.getStatus(request);
+                 Map<String, Object> model = Collections.unmodifiableMap(this.getErrorAttributes(request, this.getErrorAttributeOptions(request, MediaType.TEXT_HTML)));
+                 response.setStatus(status.value());
+                 ModelAndView modelAndView = this.resolveErrorView(request, response, status, model);
+                 return modelAndView != null ? modelAndView : new ModelAndView("error", model);
+             }
+    ■ 2、解析错误视图；遍历所有的  ErrorViewResolver  看谁能解析。
+            protected ModelAndView resolveErrorView(HttpServletRequest request, HttpServletResponse response, HttpStatus status, Map<String, Object> model) {
+                    Iterator var5 = this.errorViewResolvers.iterator();
+
+                    ModelAndView modelAndView;
+                    do {
+                        if (!var5.hasNext()) {
+                            return null;
+                        }
+                        // 遍历所有的  ErrorViewResolver  看谁能解析
+                        ErrorViewResolver resolver = (ErrorViewResolver)var5.next();
+                        modelAndView = resolver.resolveErrorView(request, status, model);
+                    } while(modelAndView == null);
+
+                    return modelAndView;
+                }
+    ■ 3、默认的ErrorViewResolver只有一个 DefaultErrorViewResolver ,作用是把响应状态码作为错误页的地址，error/500.html
+         public ModelAndView resolveErrorView(HttpServletRequest request, HttpStatus status, Map<String, Object> model) {
+                 //String.valueOf(status.value()) 请求的状态码被转换成为一个字符串 作为ViewName
+                 ModelAndView modelAndView = this.resolve(String.valueOf(status.value()), model);
+                 if (modelAndView == null && SERIES_VIEWS.containsKey(status.series())) {
+                     modelAndView = this.resolve((String)SERIES_VIEWS.get(status.series()), model);
+                 }
+
+                 return modelAndView;
+             }
+    ■ 4、模板引擎最终响应这个页面 error/500.html
+        private ModelAndView resolve(String viewName, Map<String, Object> model) {
+                String errorViewName = "error/" + viewName;
+                TemplateAvailabilityProvider provider = this.templateAvailabilityProviders.getProvider(errorViewName, this.applicationContext);
+                return provider != null ? new ModelAndView(errorViewName, model) : this.resolveResource(errorViewName, model);
+            }
+
+     结合doDispatch()方法来看:
+     protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+     		HttpServletRequest processedRequest = request;
+     		HandlerExecutionChain mappedHandler = null;
+     		boolean multipartRequestParsed = false;
+
+     		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+
+     		try {
+     			ModelAndView mv = null;
+     			Exception dispatchException = null;
+
+     			try {
+     				processedRequest = checkMultipart(request);
+     				multipartRequestParsed = (processedRequest != request);
+
+     				// Determine handler for the current request.
+     				mappedHandler = getHandler(processedRequest);
+     				if (mappedHandler == null) {
+     					noHandlerFound(processedRequest, response);
+     					return;
+     				}
+
+     				// Determine handler adapter for the current request.
+     				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
+
+     				// Process last-modified header, if supported by the handler.
+     				String method = request.getMethod();
+     				boolean isGet = "GET".equals(method);
+     				if (isGet || "HEAD".equals(method)) {
+     					long lastModified = ha.getLastModified(request, mappedHandler.getHandler());
+     					if (new ServletWebRequest(request, response).checkNotModified(lastModified) && isGet) {
+     						return;
+     					}
+     				}
+
+     				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
+     					return;
+     				}
+
+     				// Actually invoke the handler. 执行目标方法
+     				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
+
+     				if (asyncManager.isConcurrentHandlingStarted()) {
+     					return;
+     				}
+
+     				applyDefaultViewName(processedRequest, mv);
+     				mappedHandler.applyPostHandle(processedRequest, response, mv);
+     			}
+     			//当目标方法发生任何运行时异常都会被捕捉 并且被封装为一个dispatchException
+     			catch (Exception ex) {
+     				dispatchException = ex;
+     			}
+     			catch (Throwable err) {
+     				// As of 4.3, we're processing Errors thrown from handler methods as well,
+     				// making them available for @ExceptionHandler methods and other scenarios.
+     				dispatchException = new NestedServletException("Handler dispatch failed", err);
+     			}
+     			//视图解析流程 页面渲染？mappedHandler处理器 mv真确执行了才会有值
+     			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
+     		}
+     		catch (Exception ex) {
+     			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
+     		}
+     		catch (Throwable err) {
+     			triggerAfterCompletion(processedRequest, response, mappedHandler,
+     					new NestedServletException("Handler processing failed", err));
+     		}
+     		finally {
+     			if (asyncManager.isConcurrentHandlingStarted()) {
+     				// Instead of postHandle and afterCompletion
+     				if (mappedHandler != null) {
+     					mappedHandler.applyAfterConcurrentHandlingStarted(processedRequest, response);
+     				}
+     			}
+     			else {
+     				// Clean up any resources used by a multipart request.
+     				if (multipartRequestParsed) {
+     					cleanupMultipart(processedRequest);
+     				}
+     			}
+     		}
+     	}
+
+        private void processDispatchResult(HttpServletRequest request, HttpServletResponse response,
+        			@Nullable HandlerExecutionChain mappedHandler, @Nullable ModelAndView mv,
+        			@Nullable Exception exception) throws Exception {
+
+        		boolean errorView = false;
+                //如果发生异常此时的值就不为空
+        		if (exception != null) {
+        			if (exception instanceof ModelAndViewDefiningException) {
+        				logger.debug("ModelAndViewDefiningException encountered", exception);
+        				mv = ((ModelAndViewDefiningException) exception).getModelAndView();
+        			}
+        			else {
+        				Object handler = (mappedHandler != null ? mappedHandler.getHandler() : null);
+        				//处理handler的异常 处理完仍然返回一个ModelAndView
+        				mv = processHandlerException(request, response, handler, exception);
+        				errorView = (mv != null);
+        			}
+        		}
+
+        		// Did the handler return a view to render?
+        		if (mv != null && !mv.wasCleared()) {
+        			render(mv, request, response);
+        			if (errorView) {
+        				WebUtils.clearErrorRequestAttributes(request);
+        			}
+        		}
+        		else {
+        			if (logger.isTraceEnabled()) {
+        				logger.trace("No view rendering, null ModelAndView returned.");
+        			}
+        		}
+
+        		if (WebAsyncUtils.getAsyncManager(request).isConcurrentHandlingStarted()) {
+        			// Concurrent handling started during a forward
+        			return;
+        		}
+
+        		if (mappedHandler != null) {
+        			// Exception (if any) is already handled..
+        			mappedHandler.triggerAfterCompletion(request, response, null);
+        		}
+        	}
+
+        	@Nullable
+            	protected ModelAndView processHandlerException(HttpServletRequest request, HttpServletResponse response,
+            			@Nullable Object handler, Exception ex) throws Exception {
+
+            		// Success and error responses may use different content types
+            		request.removeAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
+
+            		// Check registered HandlerExceptionResolvers...
+            		ModelAndView exMv = null;
+            		//遍历所有的handlerExceptionResolver，谁能处理当前异常
+            		if (this.handlerExceptionResolvers != null) {
+            			for (HandlerExceptionResolver resolver : this.handlerExceptionResolvers) {
+            				exMv = resolver.resolveException(request, response, handler, ex);
+            				if (exMv != null) {
+            					break;
+            				}
+            			}
+            		}
+            		if (exMv != null) {
+            			if (exMv.isEmpty()) {
+            				request.setAttribute(EXCEPTION_ATTRIBUTE, ex);
+            				return null;
+            			}
+            			// We might still need view name translation for a plain error model...
+            			if (!exMv.hasView()) {
+            				String defaultViewName = getDefaultViewName(request);
+            				if (defaultViewName != null) {
+            					exMv.setViewName(defaultViewName);
+            				}
+            			}
+            			if (logger.isTraceEnabled()) {
+            				logger.trace("Using resolved error view: " + exMv, ex);
+            			}
+            			else if (logger.isDebugEnabled()) {
+            				logger.debug("Using resolved error view: " + exMv);
+            			}
+            			WebUtils.exposeErrorRequestAttributes(request, ex, getServletName());
+            			return exMv;
+            		}
+
+            		throw ex;
+            	}

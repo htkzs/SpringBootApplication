@@ -1,0 +1,144 @@
+springboot的单元测试
+Junit4单元测试的代码演示
+        /**
+         * @ClassName : Junit4Test
+         * @Description : junit4测试类
+         * @Author : 20609
+         * @Date: 2023/2/6  15:49
+         */
+        @SpringBootTest
+        //@RunWith(SpringRunner.class)
+        @RunWith(SpringJUnit4ClassRunner.class)  //使用spring容器实例启动测试
+        @Slf4j
+        public class Junit4Test {
+            @Autowired
+            JdbcTemplate jdbcTemplate;
+            @Test  //注意注解为import org.junit.Test
+            public void testJunit4(){
+                log.info(String.valueOf(jdbcTemplate.getClass()));
+            }
+        }
+Junit5单元测试案例
+       /**
+        * @ClassName : junit5Test
+        * @Description : junit5测试类
+        * @Author : 20609
+        * @Date: 2023/2/6  15:21
+        */
+       @SpringBootTest
+       // @SpringBootTest Junit类具有Spring的功能，@Autowired、比如 @Transactional 标注测试方法，测试完成后自动回滚
+       @Slf4j
+       public class Junit5Test {
+           @Autowired
+           JdbcTemplate jdbcTemplate;
+           @Test //注意@Test注解在org.junit.jupiter.api.Test下
+           public void testJunit5(){
+               log.info(String.valueOf(jdbcTemplate.getClass()));
+           }
+           //测试结果为  class org.springframework.jdbc.core.JdbcTemplate
+       }
+
+Junit5相对于Junit4的变化
+   Spring Boot 2.2.0 版本开始引入 JUnit 5 作为单元测试默认库
+   作为最新版本的JUnit框架，JUnit5与之前版本的Junit框架有很大的不同。由三个不同子项目的几个不同模块组成。
+   JUnit 5 = JUnit Platform + JUnit Jupiter + JUnit Vintage
+   JUnit Platform: Junit Platform是在JVM上启动测试框架的基础，不仅支持Junit自制的测试引擎，其他测试引擎也都可以接入。
+   JUnit Jupiter: JUnit Jupiter提供了JUnit5的新的编程模型，是JUnit5新特性的核心。内部 包含了一个测试引擎，用于在Junit Platform上运行。
+   JUnit Vintage: 由于JUint已经发展多年，为了照顾老的项目，JUnit Vintage提供了兼容JUnit4.x,Junit3.x的测试引擎。
+
+
+注意点: SpringBoot 2.4 以上版本移除了默认对 Vintage 的依赖。如果需要兼容junit4需要自行引入（不能使用junit4的功能 @Test）
+     JUnit 5’s Vintage Engine Removed from spring-boot-starter-test,如果需要继续兼容junit4需要自行引入vintage
+
+     <dependency>
+         <groupId>org.junit.vintage</groupId>
+         <artifactId>junit-vintage-engine</artifactId>
+         <scope>test</scope>
+         <exclusions>
+             <exclusion>
+                 <groupId>org.hamcrest</groupId>
+                 <artifactId>hamcrest-core</artifactId>
+             </exclusion>
+         </exclusions>
+     </dependency>
+
+Junit单元测试的常见注解：
+   JUnit5的注解与JUnit4的注解有所变化
+   详见junit官方网站:
+   https://junit.org/junit5/docs/current/user-guide/#writing-tests-annotations
+   ● @Test :表示方法是测试方法。但是与JUnit4的@Test不同，他的职责非常单一不能声明任何属性，拓展的测试将会由Jupiter提供额外测试
+   ● @ParameterizedTest :表示方法是参数化测试，下方会有详细介绍
+   ● @RepeatedTest :表示方法可重复执行，下方会有详细介绍
+   ● @DisplayName :为测试类或者测试方法设置展示名称
+   ● @BeforeEach :表示在每个单元测试之前执行
+   ● @AfterEach :表示在每个单元测试之后执行
+   ● @BeforeAll :表示在所有单元测试之前执行
+   ● @AfterAll :表示在所有单元测试之后执行
+   ● @Tag :表示单元测试类别，类似于JUnit4中的@Categories
+   ● @Disabled :表示测试类或测试方法不执行，类似于JUnit4中的@Ignore
+   ● @Timeout :表示测试方法运行如果超过了指定时间将会返回错误
+   ● @ExtendWith :为测试类或测试方法提供扩展类引用  包含在@SpringBootTest注解中
+
+使用案例:
+   @SpringBootTest
+   // @SpringBootTest Junit类具有Spring的功能，@Autowired、比如 @Transactional 标注测试方法，测试完成后自动回滚
+   @Slf4j
+   public class Junit5Test {
+       @Autowired
+       JdbcTemplate jdbcTemplate;
+       @Test //注意@Test注解在org.junit.jupiter.api.Test下
+       public void testJunit5(){
+           log.info(String.valueOf(jdbcTemplate.getClass()));
+       }
+       //测试结果为  class org.springframework.jdbc.core.JdbcTemplate
+       @Test
+       @DisplayName("展示测试类或者测试方法的名称")
+       void testDisplayName(){
+           System.out.println("我的第一个测试方法");
+       }
+       @Test
+       @BeforeEach
+       void testBeforeEach(){
+           System.out.println("在每个单元测试之前执行一次");
+       }
+       @Test
+       @AfterEach
+       void testAfterEach(){
+           System.out.println("在每个单元测试之后执行一次");
+       }
+
+       @Test
+       @BeforeAll
+       static void testBeforeAll(){   //注意此处必须为一个静态方法
+           System.out.println("在所有的单元测试之前执行一次");
+       }
+
+       @Test
+       @AfterAll
+       static void testAfterAll(){   //注意此处必须为一个静态方法
+           System.out.println("在所有的单元测试之后执行一次");
+       }
+       /**
+       * @Param :
+       * @Description :  如果方法执行超时将报如下异常 java.util.concurrent.TimeoutException: testTimeOut() timed out after 5 seconds
+       * @Author : 20609
+       * @Date : 2023/2/7 11:25
+       */
+
+       @Test
+       @Timeout(value = 5,unit = TimeUnit.SECONDS)
+       void testTimeOut() throws InterruptedException {
+           Thread.sleep(6000);
+       }
+       /**
+       * @Param :
+       * @Description :  重复子项该测试方法指定测试次数
+       * @Author : 20609
+       * @Date : 2023/2/7 11:30
+       */
+
+       @RepeatedTest(value = 5)
+       void testRepeatedTest(){
+           System.out.println("重复执行测试方法5次");
+       }
+   }

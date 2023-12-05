@@ -1,0 +1,18 @@
+springboot的断言机制
+断言（assertions）是测试方法中的核心部分，用来对测试需要满足的条件进行验证。这些断言方法都是 org.junit.jupiter.api.Assertions 的静态方法。
+JUnit 5 内置的断言可以分成如下几个类别：
+1.检查业务逻辑返回的数据是否合理。
+2.所有的测试运行结束以后，会有一个详细的测试报告； 执行maven的 clean test命令会生成一个报告
+1、简单断言
+用来对单个值进行简单的验证。如：
+方法说明:
+    assertEquals	判断两个对象或两个原始类型是否相等
+    assertNotEquals	判断两个对象或两个原始类型是否不相等
+    assertSame	判断两个对象引用是否指向同一个对象
+    assertNotSame	判断两个对象引用是否指向不同的对象
+    assertTrue	判断给定的布尔值是否为 true
+    assertFalse	判断给定的布尔值是否为 false
+    assertNull	判断给定的对象引用是否为 null
+    assertNotNull	判断给定的对象引用是否不为 null
+
+测试案例:
