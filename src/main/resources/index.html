@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring boot 2</title>
+</head>
+<body>
+<h1>hello spring boot 2</h1>
+<a href="/car/1/owner/zhangsan?age=23&hobbies=pingpang&hobbies=basketball">/car/1/owner/zhangsan</a>
+<form action="/save" method="post">
+    USERNAME:<input type="text" name="username"><br/>
+    PASSWORD:<input type="password" name="password"><br/>
+    <input type="submit" value="submit">
+</form>
+
+<form action="/save1" method="post">
+    USERNAME:<input type="text" name="username"><br/>
+    PASSWORD:<input type="password" name="password"><br/>
+    <input type="submit" value="submit">
+</form>
+<!--测试矩阵变量-->
+<a href="/cars/sale;min=10;brand=BWM,BYD,BY">矩阵变量 @MatrixVariable</a>
+
+<a href="/boss/1;age=20/2;age=10">矩阵变量案例2 @MatrixVariable</a>
+
+</body>
+</html>

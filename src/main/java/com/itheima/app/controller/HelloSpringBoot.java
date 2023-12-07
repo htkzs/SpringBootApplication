@@ -1,5 +1,6 @@
 package com.itheima.app.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
  *   @RestController = @ResponseBody+@Controller
  */
 @RestController
+@Slf4j
 public class HelloSpringBoot {
     @Autowired
     private JdbcTemplate jdbcTemplate;

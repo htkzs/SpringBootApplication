@@ -2,7 +2,7 @@ package com.itheima.app.entity;
 
 import lombok.*;
 
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
