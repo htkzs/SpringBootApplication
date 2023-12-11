@@ -19,7 +19,8 @@ import java.util.Arrays;
  * @Author : 20609
  * @Date: 2023/1/1  13:04
  */
-//@Configuration
+//@Deprecated  //标识该配置类过期采用starter的方式配置druid
+@Configuration
 public class MyDataSourceConfig {
     //将配置文件的配置项的值和DruidDataSource类中的属性值绑定
     @ConfigurationProperties(prefix = "spring.datasource")
@@ -28,7 +29,7 @@ public class MyDataSourceConfig {
         DruidDataSource dataSource = new DruidDataSource();
         //设置最大的活动线程数
         dataSource.setMaxActive(10);
-        //加入监控功能和防火墙功能
+        //加入监控功能和防火墙功能,如果不加stat则不能监控sql的执行状态
         dataSource.setFilters("stat,wall");
         return dataSource;
     }
@@ -63,6 +64,7 @@ public class MyDataSourceConfig {
 
         FilterRegistrationBean<WebStatFilter> filterRegistrationBean = new FilterRegistrationBean<>(webStatFilter);
         filterRegistrationBean.setUrlPatterns(Arrays.asList("/*"));
+        //排除一些过滤的路径
         filterRegistrationBean.addInitParameter("exclusions","*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
 
         return filterRegistrationBean;

@@ -6,8 +6,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Setter
-@Getter
 public class Pet {
     private String petName;
     private Integer petAge;
