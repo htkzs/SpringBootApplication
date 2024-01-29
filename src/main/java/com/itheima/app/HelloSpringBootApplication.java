@@ -6,6 +6,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.web.servlet.DispatcherServlet;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @SpringBootApplication：标识该应用是一个Springboot应用
@@ -68,5 +73,20 @@ public class HelloSpringBootApplication {
             System.out.println(name);
         }
 
+
+        ConfigurableEnvironment environment = run.getEnvironment();
+        //获取环境变量的值
+        Map<String, Object> systemEnvironment = environment.getSystemEnvironment();
+        //获取系统属性
+        Map<String, Object> systemProperties = environment.getSystemProperties();
+
+        Set<String> keySet = systemEnvironment.keySet();
+        for (String key:keySet){
+            System.out.println("环境变量的属性为："+key+":对应的值为"+systemEnvironment.get(key));
+        }
+        Set<String> set = systemProperties.keySet();
+        for (String key:set){
+            System.out.println("系统属性名称为："+key+":对应的值为"+systemProperties.get(key));
+        }
     }
 }

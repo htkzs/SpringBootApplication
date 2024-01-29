@@ -1,0 +1,5 @@
+## 生产环境配置文件
+people:
+  perNo: 1001
+  name: teacher zhang
+  professional: teacher

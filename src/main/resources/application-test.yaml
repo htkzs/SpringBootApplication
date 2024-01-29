@@ -1,0 +1,5 @@
+## 测试环境配置文件
+people:
+  perNo: 1002
+  name: boss zhang
+  professional: boss

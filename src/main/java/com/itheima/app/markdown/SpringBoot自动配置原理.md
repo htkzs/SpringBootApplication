@@ -300,7 +300,7 @@ org.springframework.boot.autoconfigure.webservices.client.WebServiceTemplateAuto
     }
     }
 
-    //用于指定配置的优先级
+    //用于指定配置的优先级highest_precedence
     @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
     //标明该类是一个配置类
     @Configuration(proxyBeanMethods = false)

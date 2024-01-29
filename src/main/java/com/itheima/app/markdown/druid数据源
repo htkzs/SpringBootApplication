@@ -1,0 +1,293 @@
+github中文学习地址 https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98
+springboot整合第三方druid数据源的方法
+@Configuration
+public class MyDataSourceConfig {
+
+    // 默认的自动配置是判断容器中没有才会配@ConditionalOnMissingBean(DataSource.class)
+    @ConfigurationProperties("spring.datasource")
+    @Bean
+    public DataSource dataSource() throws SQLException {
+        DruidDataSource druidDataSource = new DruidDataSource();
+
+        druidDataSource.setUrl();
+        druidDataSource.setUsername();
+        druidDataSource.setPassword();
+        //加入监控功能 和防火墙功能（防止sql的注入攻击）
+        druidDataSource.setFilters("stat,wall");
+
+        druidDataSource.setMaxActive(10);
+        return druidDataSource;
+    }
+
+    /**
+     * 配置 druid的监控页功能 原理配置一个servlet，urlMappings设置为 /druid/*
+     * @return
+     */
+    @Bean
+    public ServletRegistrationBean statViewServlet(){
+        StatViewServlet statViewServlet = new StatViewServlet();
+        ServletRegistrationBean<StatViewServlet> registrationBean = new ServletRegistrationBean<>(statViewServlet, "/druid/*");
+
+        registrationBean.addInitParameter("loginUsername","admin");
+        registrationBean.addInitParameter("loginPassword","123456");
+
+
+        return registrationBean;
+    }
+
+    /**
+     * WebStatFilter 用于采集web-jdbc关联监控的数据。
+     */
+    @Bean
+    public FilterRegistrationBean webStatFilter(){
+        WebStatFilter webStatFilter = new WebStatFilter();
+
+        FilterRegistrationBean<WebStatFilter> filterRegistrationBean = new FilterRegistrationBean<>(webStatFilter);
+        filterRegistrationBean.setUrlPatterns(Arrays.asList("/*"));
+        filterRegistrationBean.addInitParameter("exclusions","*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
+
+        return filterRegistrationBean;
+    }
+
+}
+
+使用官方的starter整合第三方数据源druid
+    <dependency>
+       <groupId>com.alibaba</groupId>
+       <artifactId>druid-spring-boot-starter</artifactId>
+       <version>1.1.17</version>
+    </dependency>
+  druid-springboot-starter的自动配置解析
+  com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure
+
+      @Configuration
+      @ConditionalOnClass({DruidDataSource.class}) //条件注解判断存在DruidDataSource 下面配置才生效
+      @AutoConfigureBefore({DataSourceAutoConfiguration.class}) //标注配置类的一个优先级，DataSourceAutoConfiguration中官方会自动配置一个hikari数据源，这里配置的优先级应该高于boot自动配置的数据源
+      @EnableConfigurationProperties({DruidStatProperties.class, DataSourceProperties.class})
+      @Import({DruidSpringAopConfiguration.class, DruidStatViewServletConfiguration.class, DruidWebStatFilterConfiguration.class, DruidFilterConfiguration.class})
+      public class DruidDataSourceAutoConfigure {
+          private static final Logger LOGGER = LoggerFactory.getLogger(DruidDataSourceAutoConfigure.class);
+
+          public DruidDataSourceAutoConfigure() {
+          }
+
+          @Bean(
+              initMethod = "init"
+          )
+          @ConditionalOnMissingBean
+          public DataSource dataSource() {
+              LOGGER.info("Init DruidDataSource");
+              return new DruidDataSourceWrapper();
+          }
+      }
+
+      import导入的配置解析
+      ● 扩展配置项 spring.datasource.druid
+      ● DruidSpringAopConfiguration.class,   监控SpringBean的；配置项：spring.datasource.druid.aop-patterns
+
+         @ConditionalOnProperty({"spring.datasource.druid.aop-patterns"})
+         public class DruidSpringAopConfiguration {
+             public DruidSpringAopConfiguration() {
+             }
+
+             @Bean
+             public Advice advice() {
+                 return new DruidStatInterceptor();
+             }
+
+             @Bean
+             public Advisor advisor(DruidStatProperties properties) {
+                 return new RegexpMethodPointcutAdvisor(properties.getAopPatterns(), this.advice());
+             }
+
+             @Bean
+             public DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator() {
+                 DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
+                 advisorAutoProxyCreator.setProxyTargetClass(true);
+                 return advisorAutoProxyCreator;
+             }
+         }
+
+      ● DruidStatViewServletConfiguration.class, 监控页的配置：spring.datasource.druid.stat-view-servlet；默认开启
+        例如yml文件中就可以配置
+        stat-view-servlet:  #监控页配置
+                enabled: true
+                login-username: admin
+                login-password: admin
+                resetEnable: false  //是否有重置按钮
+
+        @ConditionalOnWebApplication
+        @ConditionalOnProperty(
+            name = {"spring.datasource.druid.stat-view-servlet.enabled"},
+            havingValue = "true"
+        )
+        public class DruidStatViewServletConfiguration {
+            private static final String DEFAULT_ALLOW_IP = "127.0.0.1";
+
+            public DruidStatViewServletConfiguration() {
+            }
+
+            @Bean
+            public ServletRegistrationBean statViewServletRegistrationBean(DruidStatProperties properties) {
+                StatViewServlet config = properties.getStatViewServlet();
+                ServletRegistrationBean registrationBean = new ServletRegistrationBean();
+                registrationBean.setServlet(new com.alibaba.druid.support.http.StatViewServlet());
+                registrationBean.addUrlMappings(new String[]{config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*"});
+                if (config.getAllow() != null) {
+                    registrationBean.addInitParameter("allow", config.getAllow());
+                } else {
+                    registrationBean.addInitParameter("allow", "127.0.0.1");
+                }
+
+                if (config.getDeny() != null) {
+                    registrationBean.addInitParameter("deny", config.getDeny());
+                }
+
+                if (config.getLoginUsername() != null) {
+                    registrationBean.addInitParameter("loginUsername", config.getLoginUsername());
+                }
+
+                if (config.getLoginPassword() != null) {
+                    registrationBean.addInitParameter("loginPassword", config.getLoginPassword());
+                }
+
+                if (config.getResetEnable() != null) {
+                    registrationBean.addInitParameter("resetEnable", config.getResetEnable());
+                }
+
+                return registrationBean;
+            }
+        }
+
+      ● DruidWebStatFilterConfiguration.class, web监控配置；spring.datasource.druid.web-stat-filter；默认开启
+
+      例如配置：
+       web-stat-filter:  #web监控
+              enabled: true
+              urlPattern: /*
+              exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+
+      @ConditionalOnWebApplication
+      @ConditionalOnProperty(name = "spring.datasource.druid.web-stat-filter.enabled", havingValue = "true")
+      public class DruidWebStatFilterConfiguration {
+          @Bean
+          public FilterRegistrationBean webStatFilterRegistrationBean(DruidStatProperties properties) {
+              DruidStatProperties.WebStatFilter config = properties.getWebStatFilter();
+              FilterRegistrationBean registrationBean = new FilterRegistrationBean();
+              WebStatFilter filter = new WebStatFilter();
+              registrationBean.setFilter(filter);
+              registrationBean.addUrlPatterns(config.getUrlPattern() != null ? config.getUrlPattern() : "/*");
+              registrationBean.addInitParameter("exclusions", config.getExclusions() != null ? config.getExclusions() : "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
+              if (config.getSessionStatEnable() != null) {
+                  registrationBean.addInitParameter("sessionStatEnable", config.getSessionStatEnable());
+              }
+              if (config.getSessionStatMaxCount() != null) {
+                  registrationBean.addInitParameter("sessionStatMaxCount", config.getSessionStatMaxCount());
+              }
+              if (config.getPrincipalSessionName() != null) {
+                  registrationBean.addInitParameter("principalSessionName", config.getPrincipalSessionName());
+              }
+              if (config.getPrincipalCookieName() != null) {
+                  registrationBean.addInitParameter("principalCookieName", config.getPrincipalCookieName());
+              }
+              if (config.getProfileEnable() != null) {
+                  registrationBean.addInitParameter("profileEnable", config.getProfileEnable());
+              }
+              return registrationBean;
+          }
+      }
+
+      ● DruidFilterConfiguration.class}) 所有Druid自己filter的配置
+      例如配置:
+      druid:
+            filters: stat,wall,slf4j  #所有开启的功能
+
+      public class DruidFilterConfiguration {
+
+                @Bean
+                @ConfigurationProperties(FILTER_STAT_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_STAT_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public StatFilter statFilter() {
+                    return new StatFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_CONFIG_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_CONFIG_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public ConfigFilter configFilter() {
+                    return new ConfigFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_ENCODING_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_ENCODING_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public EncodingConvertFilter encodingConvertFilter() {
+                    return new EncodingConvertFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_SLF4J_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_SLF4J_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public Slf4jLogFilter slf4jLogFilter() {
+                    return new Slf4jLogFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_LOG4J_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_LOG4J_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public Log4jFilter log4jFilter() {
+                    return new Log4jFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_LOG4J2_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_LOG4J2_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public Log4j2Filter log4j2Filter() {
+                    return new Log4j2Filter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_COMMONS_LOG_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_COMMONS_LOG_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public CommonsLogFilter commonsLogFilter() {
+                    return new CommonsLogFilter();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_WALL_CONFIG_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_WALL_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public WallConfig wallConfig() {
+                    return new WallConfig();
+                }
+
+                @Bean
+                @ConfigurationProperties(FILTER_WALL_PREFIX)
+                @ConditionalOnProperty(prefix = FILTER_WALL_PREFIX, name = "enabled")
+                @ConditionalOnMissingBean
+                public WallFilter wallFilter(WallConfig wallConfig) {
+                    WallFilter filter = new WallFilter();
+                    filter.setConfig(wallConfig);
+                    return filter;
+                }
+
+                //可以配置的所有过滤器
+                private static final String FILTER_STAT_PREFIX = "spring.datasource.druid.filter.stat";
+                private static final String FILTER_CONFIG_PREFIX = "spring.datasource.druid.filter.config";
+                private static final String FILTER_ENCODING_PREFIX = "spring.datasource.druid.filter.encoding";
+                private static final String FILTER_SLF4J_PREFIX = "spring.datasource.druid.filter.slf4j";
+                private static final String FILTER_LOG4J_PREFIX = "spring.datasource.druid.filter.log4j";
+                private static final String FILTER_LOG4J2_PREFIX = "spring.datasource.druid.filter.log4j2";
+                private static final String FILTER_COMMONS_LOG_PREFIX = "spring.datasource.druid.filter.commons-log";
+                private static final String FILTER_WALL_PREFIX = "spring.datasource.druid.filter.wall";
+                private static final String FILTER_WALL_CONFIG_PREFIX = FILTER_WALL_PREFIX + ".config";
+
+
+            }

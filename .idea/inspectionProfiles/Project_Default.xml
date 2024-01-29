@@ -590,7 +590,7 @@
       <option name="IGNORE_JAVADOC_PERIOD" value="true" />
       <option name="IGNORE_DUPLICATED_THROWS" value="false" />
       <option name="IGNORE_POINT_TO_ITSELF" value="false" />
-      <option name="myAdditionalJavadocTags" value="SpringBootApplication：标识该应用是一个Springboot应用" />
+      <option name="myAdditionalJavadocTags" value="SpringBootApplication：标识该应用是一个Springboot应用,ClassName,Description,Author,Date:,Param,Date" />
     </inspection_tool>
     <inspection_tool class="JavaLangImport" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="ERRORS_ATTRIBUTES" />
     <inspection_tool class="JavaLangInvokeHandleSignature" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="ERRORS_ATTRIBUTES" />
