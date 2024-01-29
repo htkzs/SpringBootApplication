@@ -7,12 +7,21 @@
     <groupId>org.itheima</groupId>
     <artifactId>SpringBootApplication</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <!--将Springboot继承过来-->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.3.4.RELEASE</version>
     </parent>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <mysql.version>5.1.43</mysql.version>
+        <dynamic.datasource>3.5.1</dynamic.datasource>
+    </properties>
+
     <dependencies>
         <!--开发web应用只需要引入一个场景启动器即可 boot可以帮助我们管理依赖解决冲突-->
         <dependency>
@@ -43,12 +52,51 @@
             <artifactId>jquery</artifactId>
             <version>3.5.1</version>
         </dependency>
+        <!--springboot整合mybatis和mybatisplus的相关依赖-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+        <!--整合mybatisplus操作持久层 简化单表的crud操作-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.4.2</version>
+        </dependency>
+        <!--mybatisplus的代码生成插件-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-generator</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+        <!--动态多数据源的相关依赖配置-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+            <version>${dynamic.datasource}</version>
+        </dependency>
+
     </dependencies>
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
-    <!--SpringBoot为了简化部署，通过该工具将web应用打成一个jar包-->
+
+    <!--SpringBoot为了简化部署，支持通过该工具将web应用打成一个jar包-->
     <build>
         <plugins>
             <plugin>
