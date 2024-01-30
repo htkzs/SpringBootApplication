@@ -14,19 +14,16 @@ import org.springframework.web.util.UrlPathHelper;
 @Configuration(proxyBeanMethods = true)
 @EnableConfigurationProperties(value = Car.class)
 public class ApplicationConfig  {
-
-     @ConditionalOnBean(name = "getPet")
+     @ConditionalOnBean(name = "tom")
      @Bean
      public User getUser(){
          User zhangsan = new User("zhangsan", 23);
          zhangsan.setPet(getPet());
          return zhangsan;
      }
+
      @Bean
      public Pet getPet(){
          return new Pet("哈士奇",2);
      }
-
-
-
 }

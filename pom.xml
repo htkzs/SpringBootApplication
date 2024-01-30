@@ -7,28 +7,26 @@
     <groupId>org.itheima</groupId>
     <artifactId>SpringBootApplication</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <!--将Springboot继承过来-->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.3.4.RELEASE</version>
-        <relativePath/>
     </parent>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <mysql.version>5.1.43</mysql.version>
+        <dynamic.datasource>3.5.1</dynamic.datasource>
+    </properties>
+
     <dependencies>
         <!--开发web应用只需要引入一个场景启动器即可 boot可以帮助我们管理依赖解决冲突-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-undertow</artifactId>
         </dependency>
         <!--主要用来对静态页修改后 不需要重启项目自动加载 对于java文件的修改和配置文件的修改实质上还是重新启动一次 Ctrl+F9-->
         <dependency>
@@ -51,8 +49,15 @@
         </dependency>
         <!--springboot开发数据库-->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <!--springboot整合mybatis和mybatisplus的相关依赖-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
         </dependency>
         <!--映入mysql的驱动-->
         <dependency>
@@ -60,6 +65,9 @@
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.13</version>
             <groupId>org.thymeleaf</groupId>
             <artifactId>thymeleaf</artifactId>
         </dependency>
@@ -72,17 +80,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
         </dependency>
-        <!--引入druid数据源-->
+        <!--整合mybatisplus操作持久层 简化单表的crud操作-->
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid</artifactId>
-            <version>1.1.17</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.4.2</version>
         </dependency>
-        <!--通过官方starter引入druid数据源-->
+        <!--mybatisplus的代码生成插件-->
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>1.1.17</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-generator</artifactId>
+            <version>3.5.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -95,9 +103,8 @@
 <!--        </dependency>-->
         <!--注意在导入mybatis-plus相关依赖后，batis-spring-boot-starter的依赖不在需要-->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.4.1</version>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -105,18 +112,16 @@
         </dependency>
 
         <!--引入自定义的starter-->
+        <!--动态多数据源的相关依赖配置-->
         <dependency>
-            <groupId>org.tuling</groupId>
-            <artifactId>customize-springboot-starter</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+            <version>${dynamic.datasource}</version>
         </dependency>
+
     </dependencies>
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <mysql.version>5.1.18</mysql.version>
-    </properties>
-    <!--SpringBoot为了简化部署，通过该工具将web应用打成一个jar包-->
+
+    <!--SpringBoot为了简化部署，支持通过该工具将web应用打成一个jar包-->
     <build>
         <plugins>
             <plugin>
