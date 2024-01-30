@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/dabad81a-8443-4462-aac0-3e6bf0e3aa98/console.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/itheima/app/sql/practice.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/itheima/app/sql/related.sql" dialect="MySQL" />
+  </component>
+</project>
