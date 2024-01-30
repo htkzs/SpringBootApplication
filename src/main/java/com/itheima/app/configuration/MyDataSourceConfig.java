@@ -8,6 +8,9 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -33,6 +36,25 @@ public class MyDataSourceConfig {
         dataSource.setFilters("stat,wall");
         return dataSource;
     }
+    /**
+     * @description: TODO 创建事务管理器
+     * @author 20609
+     * @date 2023/12/27 20:23
+     * @version 1.0
+     */
+//    @Bean
+//    public PlatformTransactionManager transactionManager() throws SQLException {
+//        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
+//        dataSourceTransactionManager.setDataSource(dataSource());
+//        return dataSourceTransactionManager;
+//    }
+//
+//    @Bean
+//    public JdbcTemplate jdbcTemplate() throws SQLException {
+//        return new JdbcTemplate(dataSource());
+//    }
+
+
 
     /**
     * @Param :
